@@ -165,8 +165,8 @@ void MQTT_Check_Responce(char data)
 		p=1;
 		MQTT_Last_Response.MQTT_READY=0;
 		MQTT_Last_Response.MQTT_RCODE=0xFF;
-		MQTT_Last_Response.MQTT_ID=0;
-		MQTT_Last_Response.MQTT_QoS=0;
+		MQTT_Last_Response.MQTT_LENGTH=0;
+		MQTT_Last_Response.MQTT_COMMAND=0;
 	}
 	else if(z<=p)
 	{
@@ -181,8 +181,22 @@ void MQTT_Check_Responce(char data)
 	{
 		MQTT_Last_Response.MQTT_COMMAND=response_temp[0]&0xF0;
 		MQTT_Last_Response.MQTT_LENGTH=value;
-		MQTT_Last_Response.MQTT_READY=1;
+		int i=0;
+		switch (MQTT_Last_Response.MQTT_COMMAND)
+		{
+			for(i=0;i<value;i++)
+					MQTT_Last_Response.MQTT_MESSAGE[i]=response_temp[2+i];
+			
+			case MQTT_CONNACK:
+				MQTT_Last_Response.MQTT_RCODE=response_temp[3];
+			break;
+
+			default:
+			
+			break;		
+		}
 		z=-1;
+		MQTT_Last_Response.MQTT_READY=1;
 	}
 	z++;
 }
@@ -202,7 +216,7 @@ int MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS
 	
 	int i=0;
 	
-	temp[i++]=MQTT_PUBLISH|QoS;
+	temp[i++]=MQTT_PUBLISH|MQTT_QOS_1;
 	
 	temp[i++] = lenTopic>>8;
 	temp[i++] = lenTopic;
@@ -259,7 +273,7 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 	
 	int i=0;
 	
-	temp[i++]=MQTT_SUBSCRIBE|QoS;
+	temp[i++]=MQTT_SUBSCRIBE;
 	
 	temp[i++] = messID>>8;
 	temp[i++] = messID;
@@ -306,5 +320,97 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 	return j;
 }
 
+int MQTT_Puback(char * dest, int messID)
+{
+	dest[0]=MQTT_PUBACK;
+	dest[1]=0x02;
+	dest[2]=messID>>8;
+	dest[3]=messID;
+	return 4;
+}
 
+int MQTT_Pubrec(char * dest, int messID)
+{
+	dest[0]=MQTT_PUBREC;
+	dest[1]=0x02;
+	dest[2]=messID>>8;
+	dest[3]=messID;
+	return 4;
+}
 
+int MQTT_Pubrel(char * dest, int messID)
+{
+	dest[0]=MQTT_PUBREL;
+	dest[1]=0x02;
+	dest[2]=messID>>8;
+	dest[3]=messID;
+	return 4;
+}
+
+int MQTT_Pubcomp(char * dest, int messID)
+{
+	dest[0]=MQTT_PUBCOMP;
+	dest[1]=0x02;
+	dest[2]=messID>>8;
+	dest[3]=messID;
+	return 4;
+}
+
+int MQTT_Unsubscribe(char * dest, char * topic, int messID)
+{
+	int lenTopic=strlen(topic);
+	char temp[lenTopic+100];
+	
+	int i=0;
+	
+	temp[i++]=MQTT_UNSUBSCRIBE|MQTT_QOS_1;
+	
+	temp[i++] = messID>>8;
+	temp[i++] = messID;
+	
+	temp[i++] = lenTopic>>8;
+	temp[i++] = lenTopic;
+	
+	int k=0;
+	
+	for(k=0;k<lenTopic;k++)
+		temp[i++]=topic[k];
+
+	char digit[5];
+	
+	int X=i-1;
+	k=0;
+	do
+	{
+		digit[k] = X%128;
+		X = X/128;
+		if (X>0)
+			digit[k] = digit[k]|0x80;
+		k++;
+	}while(X>0);
+	
+	int j=0;
+	
+	dest[0]=temp[0];
+	
+	for(j=1;j<k+i;j++)
+	{
+		if(j>=1&&j<=k)
+		{
+			dest[j]=digit[j-1];
+		}
+		else
+		{
+			dest[j]=temp[j-k];
+		}		
+	}
+	
+	return j;
+}
+
+int MQTT_Pingreq(char * dest)
+{
+	dest[0]=MQTT_PINGREQ;
+	dest[1]=0x00;
+	return 2;
+}
