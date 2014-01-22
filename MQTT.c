@@ -79,7 +79,7 @@ int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * pass
 		if(willRetain!=NULL)
 			temp[i]=temp[i]|0x20;
 		if(willQoS!=NULL)
-			temp[i]=temp[i]|willQoS;
+			temp[i]=temp[i]|(willQoS<<3);
 		temp[i]=temp[i]|0x04;
 	}
 	if(cleanflag==TRUE)
@@ -177,16 +177,15 @@ void MQTT_Check_Responce(char data)
 			p++;
 		}
 	}
-	else if(z==value+1)
+	if(z==value+1)
 	{
 		MQTT_Last_Response.MQTT_COMMAND=response_temp[0]&0xF0;
 		MQTT_Last_Response.MQTT_LENGTH=value;
 		int i=0;
+		for(i=0;i<value;i++)
+					MQTT_Last_Response.MQTT_MESSAGE[i]=response_temp[2+i];
 		switch (MQTT_Last_Response.MQTT_COMMAND)
 		{
-			for(i=0;i<value;i++)
-					MQTT_Last_Response.MQTT_MESSAGE[i]=response_temp[2+i];
-			
 			case MQTT_CONNACK:
 				MQTT_Last_Response.MQTT_RCODE=response_temp[3];
 			break;
@@ -208,27 +207,30 @@ int MQTT_Disconnect(char * dest)
 	return 2;
 }
 
-int MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS)
+QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS)
 {
 	int lenTopic=strlen(topic);
 	int lenMess=strlen(message);
 	char temp[lenTopic+lenMess+100];
 	
-	int i=0;
+	QWORD i=0;
 	
-	temp[i++]=MQTT_PUBLISH|MQTT_QOS_1;
+	temp[i++]=MQTT_PUBLISH|(QoS<<1);
 	
 	temp[i++] = lenTopic>>8;
 	temp[i++] = lenTopic;
 	
-	int k=0;
+	QWORD k=0;
 	
 	for(k=0;k<lenTopic;k++)
 		temp[i++]=topic[k];
-
-	temp[i++] = messID>>8;
-	temp[i++] = messID;
 		
+	if(QoS>0)
+	{
+		temp[i++] = messID>>8;
+		temp[i++] = messID;
+	}
+	
 	temp[i++] = lenMess>>8;
 	temp[i++] = lenMess;
 	for(k=0;k<lenMess;k++)
@@ -247,7 +249,7 @@ int MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS
 		k++;
 	}while(X>0);
 	
-	int j=0;
+	QWORD j=0;
 	
 	dest[0]=temp[0];
 	
@@ -273,7 +275,7 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 	
 	int i=0;
 	
-	temp[i++]=MQTT_SUBSCRIBE;
+	temp[i++]=MQTT_SUBSCRIBE|(MQTT_QOS_1<<1);
 	
 	temp[i++] = messID>>8;
 	temp[i++] = messID;
@@ -286,7 +288,7 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 	for(k=0;k<lenTopic;k++)
 		temp[i++]=topic[k];
 
-	temp[i++]=QoS>>3;	
+	temp[i++]=QoS;	
 		
 	char digit[5];
 	

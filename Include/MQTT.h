@@ -18,9 +18,9 @@
 #define MQTT_PROTOCOLVERSION 3
 
 #define MQTT_QOS_0        0x00
-#define MQTT_QOS_1        0x02
-#define MQTT_QOS_2        0x04
-#define MQTT_QOS_3        0x06
+#define MQTT_QOS_1        0x01
+#define MQTT_QOS_2        0x02
+#define MQTT_QOS_3        0x03
 
 #define MQTT_MAX_RESPONSE 800
 
@@ -39,7 +39,7 @@ int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char
 int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * password, char * willTopic, char * willMessage, BOOL cleanflag, BOOL willRetain, BYTE willQoS);
 int MQTT_Disconnect(char * dest);
 void MQTT_Check_Responce(char data);
-int MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS);
+QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS);
 int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS);
 int MQTT_Puback(char * dest, int messID);
 int MQTT_Pubrec(char * dest, int messID);
