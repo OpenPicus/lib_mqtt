@@ -1,4 +1,4 @@
 lib_mqtt
 ========
 
-openpicus flyport - library for mqtt (iot)
+openpicus flyport - library for mqtt (iot) [BETA]
