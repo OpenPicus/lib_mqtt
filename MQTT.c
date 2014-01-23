@@ -1,8 +1,68 @@
+/** \file MQTT.c
+ *  \brief MQTT communication protocol library
+ */
+
+/* **************************************************************************
+ *                                OpenPicus                 www.openpicus.com
+ *                                                            italian concept
+ *
+ *            openSource wireless Platform for sensors and Internet of Things
+ * **************************************************************************
+ *  FileName:        MQTT.c
+ *  Module:          FlyPort
+ *  Compiler:        Microchip C30 v3.12 or higher
+ *
+ *  Author               Rev.    Date              Comment
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  Claudio Carbone      1.0     10/31/2013        First release  (core team)
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ *  Software License Agreement
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  This is free software; you can redistribute it and/or modify it under
+ *  the terms of the GNU General Public License (version 2) as published by
+ *  the Free Software Foundation AND MODIFIED BY OpenPicus team.
+ *
+ *  ***NOTE*** The exception to the GPL is included to allow you to distribute
+ *  a combined work that includes OpenPicus code without being obliged to
+ *  provide the source code for proprietary components outside of the OpenPicus
+ *  code.
+ *  OpenPicus software is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ *  more details.
+ *
+ *
+ * Warranty
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
+ * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
+ * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * WE ARE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
+ * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
+ * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
+ * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
+ * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
+ * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
+ *
+ **************************************************************************/
+
+/**
+\defgroup MQTT
+@{
+
+The MQTT library contains all the command to use the MQTT communication protocol.
+*/
+
 #include "TCPLib.h"
 #include "MQTT.h"
 
+
 struct MQTT_Response MQTT_Last_Response;
 
+/// @cond debug
 char response_temp[MQTT_MAX_RESPONSE];
 
 QWORD z=0;
@@ -10,22 +70,67 @@ QWORD z=0;
 int multiplier = 0; 
 QWORD value = 0;
 int p = 1;
+/// @endcond
 
+/**
+ * Fuction to send the CONNECT message with only the ID
+ * \param dest - pointer in which to store the message
+ * \param id - string with the client id
+ * \param keepalive - keep alive interval in seconds
+ * \param cleanflag - clean session flag
+ * \return the massage length
+ */
 int MQTT_ConnectID(char * dest, char * id, int keepalive, BOOL cleanflag)
 {
 	return MQTT_Connect(dest, id, keepalive, NULL, NULL, NULL, NULL, cleanflag, NULL, NULL);
 }
 
-int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag,char * user, char * password)
+/**
+ * Fuction to send the CONNECT message with the ID and USER-PASSWORD
+ * \param dest - pointer in which to store the message
+ * \param id - string with the client id
+ * \param keepalive - keep alive interval in seconds
+ * \param cleanflag - clean session flag
+ * \param user - string with the login user
+ * \param password - string with the login password
+ * \return the massage length
+ */
+int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag, char * user, char * password)
 {
 	return MQTT_Connect(dest, id, keepalive, user, password, NULL, NULL, cleanflag, NULL, NULL);
 }
 
+/**
+ * Fuction to send the CONNECT message with the ID and WILL message
+ * \param dest - pointer in which to store the message
+ * \param id - string with the client id
+ * \param keepalive - keep alive interval in seconds
+ * \param cleanflag - clean session flag
+ * \param willTopic - string with the will message topic
+ * \param willMessage - string with the will message
+ * \param willRetain - will message retain flag
+ * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
+ * \return the massage length
+ */
 int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char * willTopic, char * willMessage, BOOL willRetain, BYTE willQoS)
 {
 	return MQTT_Connect(dest, id, keepalive, NULL, NULL, willTopic, willMessage, cleanflag, willRetain, willQoS);
 }
 
+/**
+ * Fuction to send the CONNECT message
+ * \param dest - pointer in which to store the message
+ * \param id - string with the client id
+ * \param keepalive - keep alive interval in seconds
+ * \param user - string with the login user
+ * \param password - string with the login password
+ * \param willTopic - string with the will message topic
+ * \param willMessage - string with the will message
+ * \param cleanflag - clean session flag
+ * \param willRetain - will message retain flag
+ * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
+ * \return the massage length
+ */
 int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * password, char * willTopic, char * willMessage, BOOL cleanflag, BOOL willRetain, BYTE willQoS)
 {
 	int lenUser=0;
@@ -155,6 +260,10 @@ int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * pass
 	return j;
 }
 
+/**
+ * Fuction to check the server response, it must be run on every response byte with a little interval between two messages
+ * \param data - response message byte
+ */
 void MQTT_Check_Responce(char data)
 {
 	response_temp[z]=data;
@@ -200,6 +309,11 @@ void MQTT_Check_Responce(char data)
 	z++;
 }
 
+/**
+ * Fuction to send the DISCONNECT message
+ * \param dest - pointer in which to store the message
+ * \return the massage length
+ */
 int MQTT_Disconnect(char * dest)
 {
 	dest[0]=MQTT_DISCONNECT;
@@ -207,6 +321,15 @@ int MQTT_Disconnect(char * dest)
 	return 2;
 }
 
+/**
+ * Fuction to send the PUBLISH message
+ * \param dest - pointer in which to store the message
+ * \param message - string with the message that you want to publish
+ * \param topic - string with the message topic
+ * \param messID - message id number
+ * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
+ * \return the massage length
+ */
 QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS)
 {
 	int lenTopic=strlen(topic);
@@ -268,6 +391,14 @@ QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE Q
 	return j;
 }
 
+/**
+ * Fuction to send the SUBSCRIBE message
+ * \param dest - pointer in which to store the message
+ * \param topic - string with the topic in which you want to subscribe
+ * \param messID - message id number
+ * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
+ * \return the massage length
+ */
 int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 {
 	int lenTopic=strlen(topic);
@@ -322,6 +453,12 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 	return j;
 }
 
+/**
+ * Fuction to send the PUBACK message
+ * \param dest - pointer in which to store the message
+ * \param messID - message id number
+ * \return the massage length
+ */
 int MQTT_Puback(char * dest, int messID)
 {
 	dest[0]=MQTT_PUBACK;
@@ -331,6 +468,12 @@ int MQTT_Puback(char * dest, int messID)
 	return 4;
 }
 
+/**
+ * Fuction to send the PUBREC message
+ * \param dest - pointer in which to store the message
+ * \param messID - message id number
+ * \return the massage length
+ */
 int MQTT_Pubrec(char * dest, int messID)
 {
 	dest[0]=MQTT_PUBREC;
@@ -340,6 +483,12 @@ int MQTT_Pubrec(char * dest, int messID)
 	return 4;
 }
 
+/**
+ * Fuction to send the PUBREL message
+ * \param dest - pointer in which to store the message
+ * \param messID - message id number
+ * \return the massage length
+ */
 int MQTT_Pubrel(char * dest, int messID)
 {
 	dest[0]=MQTT_PUBREL;
@@ -349,6 +498,12 @@ int MQTT_Pubrel(char * dest, int messID)
 	return 4;
 }
 
+/**
+ * Fuction to send the PUBCOMP message
+ * \param dest - pointer in which to store the message
+ * \param messID - message id number
+ * \return the massage length
+ */
 int MQTT_Pubcomp(char * dest, int messID)
 {
 	dest[0]=MQTT_PUBCOMP;
@@ -358,6 +513,13 @@ int MQTT_Pubcomp(char * dest, int messID)
 	return 4;
 }
 
+/**
+ * Fuction to send the UNSUBSCRIBE message
+ * \param dest - pointer in which to store the message
+ * \param topic - string with the topic in which you want to unsubscribe
+ * \param messID - message id number
+ * \return the massage length
+ */
 int MQTT_Unsubscribe(char * dest, char * topic, int messID)
 {
 	int lenTopic=strlen(topic);
@@ -410,6 +572,11 @@ int MQTT_Unsubscribe(char * dest, char * topic, int messID)
 	return j;
 }
 
+/**
+ * Fuction to send the PINGREQ message
+ * \param dest - pointer in which to store the message
+ * \return the massage length
+ */
 int MQTT_Pingreq(char * dest)
 {
 	dest[0]=MQTT_PINGREQ;
