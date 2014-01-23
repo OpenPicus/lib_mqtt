@@ -1,3 +1,13 @@
+/** \file MQTT.h
+ *  \brief MQTT communication protocol library
+ */
+
+/**
+\mainpage Main page
+
+ Library to manage the MQTT communication protocol.
+*/
+
 #define MQTT_Reserved1 		0		//Reserved
 #define MQTT_CONNECT 		0x10	//Client request to connect to Server		CLIENT->OK
 #define MQTT_CONNACK 		0x20	//Connect Acknowledgment					RESPONSE->OK
@@ -24,6 +34,10 @@
 
 #define MQTT_MAX_RESPONSE 800
 
+/*****************************************************************************
+        MQTT_Response struct declaration
+*****************************************************************************/
+
 struct MQTT_Response
 {
   BYTE 	MQTT_COMMAND;
@@ -33,18 +47,21 @@ struct MQTT_Response
   BOOL 	MQTT_READY;
 };
 
+/*****************************************************************************
+        MQTT function declarations
+*****************************************************************************/
+
+void MQTT_Check_Responce(char data);
 int MQTT_ConnectID(char * dest, char * id, int keepalive, BOOL cleanflag);
 int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag,char * user, char * password);
 int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char * willTopic, char * willMessage, BOOL willRetain, BYTE willQoS);
 int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * password, char * willTopic, char * willMessage, BOOL cleanflag, BOOL willRetain, BYTE willQoS);
 int MQTT_Disconnect(char * dest);
-void MQTT_Check_Responce(char data);
-QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS);
-int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS);
+int MQTT_Pingreq(char * dest);
 int MQTT_Puback(char * dest, int messID);
+int MQTT_Pubcomp(char * dest, int messID);
+QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS);
 int MQTT_Pubrec(char * dest, int messID);
 int MQTT_Pubrel(char * dest, int messID);
-int MQTT_Pubcomp(char * dest, int messID);
+int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS);
 int MQTT_Unsubscribe(char * dest, char * topic, int messID);
-int MQTT_Pingreq(char * dest);
-
