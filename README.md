@@ -1,9 +1,11 @@
 lib_mqtt
 ========
 
-openpicus flyport - library for mqtt (iot) [BETA]
-
-BETA example
+Flyport library for the MQTT communication, released under GPL v.3.
+The library allows to use the MQTT communication.
+More info on wiki.openpicus.com and download it http://wiki.openpicus.com/index.php/MQTT.
+1) import files inside Flyport IDE using the external libs button.
+2) add following code example in FlyportTask.c:
 
 <pre>
 #include "taskFlyport.h"
