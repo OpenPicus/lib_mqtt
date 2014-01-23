@@ -354,6 +354,75 @@ QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE Q
 		temp[i++] = messID;
 	}
 	
+	/*temp[i++] = lenMess>>8;
+	temp[i++] = lenMess;*/
+	for(k=0;k<lenMess;k++)
+		temp[i++]=message[k];
+
+	char digit[5];
+	
+	int X=i-1;
+	k=0;
+	do
+	{
+		digit[k] = X%128;
+		X = X/128;
+		if (X>0)
+			digit[k] = digit[k]|0x80;
+		k++;
+	}while(X>0);
+	
+	QWORD j=0;
+	
+	dest[0]=temp[0];
+	
+	for(j=1;j<k+i;j++)
+	{
+		if(j>=1&&j<=k)
+		{
+			dest[j]=digit[j-1];
+		}
+		else
+		{
+			dest[j]=temp[j-k];
+		}		
+	}
+	
+	return j;
+}
+/**
+ * Fuction to send the PUBLISH message with user message length before user message
+ * \param dest - pointer in which to store the message
+ * \param message - string with the message that you want to publish
+ * \param topic - string with the message topic
+ * \param messID - message id number
+ * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
+ * \return the massage length
+ */
+QWORD MQTT_Publishcustom(char * dest, char * message, char * topic, int messID, BYTE QoS)
+{
+	int lenTopic=strlen(topic);
+	int lenMess=strlen(message);
+	char temp[lenTopic+lenMess+100];
+	
+	QWORD i=0;
+	
+	temp[i++]=MQTT_PUBLISH|(QoS<<1);
+	
+	temp[i++] = lenTopic>>8;
+	temp[i++] = lenTopic;
+	
+	QWORD k=0;
+	
+	for(k=0;k<lenTopic;k++)
+		temp[i++]=topic[k];
+		
+	if(QoS>0)
+	{
+		temp[i++] = messID>>8;
+		temp[i++] = messID;
+	}
+	
 	temp[i++] = lenMess>>8;
 	temp[i++] = lenMess;
 	for(k=0;k<lenMess;k++)
@@ -583,3 +652,4 @@ int MQTT_Pingreq(char * dest)
 	dest[1]=0x00;
 	return 2;
 }
+

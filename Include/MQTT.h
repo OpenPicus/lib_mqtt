@@ -61,7 +61,9 @@ int MQTT_Pingreq(char * dest);
 int MQTT_Puback(char * dest, int messID);
 int MQTT_Pubcomp(char * dest, int messID);
 QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS);
+QWORD MQTT_Publishcustom(char * dest, char * message, char * topic, int messID, BYTE QoS);
 int MQTT_Pubrec(char * dest, int messID);
 int MQTT_Pubrel(char * dest, int messID);
 int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS);
 int MQTT_Unsubscribe(char * dest, char * topic, int messID);
+
