@@ -14,7 +14,7 @@
  *
  *  Author               Rev.    Date              Comment
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *  Claudio Carbone      1.0     10/31/2013        First release  (core team)
+ *  Stefano Saccucci     1.0     01/23/2014        First release  (core team)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  *  Software License Agreement
