@@ -102,11 +102,11 @@ void FlyportTask()
 				
 			if(len>0)
 			{
-				
-				//int i=0;
-				//for(i=0;i<len;i++)
-				//	UARTWriteCh(1,buffer[i]);
-				
+				/*
+				int i=0;
+				for(i=0;i<len;i++)
+					UARTWriteCh(1,buffer[i]);
+				*/
 				TCPWrite(sock,buffer,len);
 				len=0;
 			}
