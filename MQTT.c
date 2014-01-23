@@ -73,12 +73,12 @@ int p = 1;
 /// @endcond
 
 /**
- * Fuction to send the CONNECT message with only the ID
+ * Function to send the CONNECT message with only the ID
  * \param dest - pointer in which to store the message
  * \param id - string with the client id
  * \param keepalive - keep alive interval in seconds
  * \param cleanflag - clean session flag
- * \return the massage length
+ * \return the message length
  */
 int MQTT_ConnectID(char * dest, char * id, int keepalive, BOOL cleanflag)
 {
@@ -86,14 +86,14 @@ int MQTT_ConnectID(char * dest, char * id, int keepalive, BOOL cleanflag)
 }
 
 /**
- * Fuction to send the CONNECT message with the ID and USER-PASSWORD
+ * Function to send the CONNECT message with the ID and USER-PASSWORD
  * \param dest - pointer in which to store the message
  * \param id - string with the client id
  * \param keepalive - keep alive interval in seconds
  * \param cleanflag - clean session flag
  * \param user - string with the login user
  * \param password - string with the login password
- * \return the massage length
+ * \return the message length
  */
 int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag, char * user, char * password)
 {
@@ -101,7 +101,7 @@ int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag, cha
 }
 
 /**
- * Fuction to send the CONNECT message with the ID and WILL message
+ * Function to send the CONNECT message with the ID and WILL message
  * \param dest - pointer in which to store the message
  * \param id - string with the client id
  * \param keepalive - keep alive interval in seconds
@@ -110,7 +110,7 @@ int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag, cha
  * \param willMessage - string with the will message
  * \param willRetain - will message retain flag
  * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
- * \return the massage length
+ * \return the message length
  */
 int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char * willTopic, char * willMessage, BOOL willRetain, BYTE willQoS)
 {
@@ -118,7 +118,7 @@ int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char
 }
 
 /**
- * Fuction to send the CONNECT message
+ * Function to send the CONNECT message
  * \param dest - pointer in which to store the message
  * \param id - string with the client id
  * \param keepalive - keep alive interval in seconds
@@ -129,7 +129,7 @@ int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char
  * \param cleanflag - clean session flag
  * \param willRetain - will message retain flag
  * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * password, char * willTopic, char * willMessage, BOOL cleanflag, BOOL willRetain, BYTE willQoS)
 {
@@ -261,10 +261,10 @@ int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * pass
 }
 
 /**
- * Fuction to check the server response, it must be run on every response byte with a little interval between two messages
+ * Function to check the server response, it must be run on every response byte with a little interval between two messages
  * \param data - response message byte
  */
-void MQTT_Check_Responce(char data)
+void MQTT_Check_Response(char data)
 {
 	response_temp[z]=data;
 	if(z==0)
@@ -310,9 +310,9 @@ void MQTT_Check_Responce(char data)
 }
 
 /**
- * Fuction to send the DISCONNECT message
+ * Function to send the DISCONNECT message
  * \param dest - pointer in which to store the message
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Disconnect(char * dest)
 {
@@ -322,13 +322,13 @@ int MQTT_Disconnect(char * dest)
 }
 
 /**
- * Fuction to send the PUBLISH message
+ * Function to send the PUBLISH message
  * \param dest - pointer in which to store the message
  * \param message - string with the message that you want to publish
  * \param topic - string with the message topic
  * \param messID - message id number
  * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
- * \return the massage length
+ * \return the message length
  */
 QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE QoS)
 {
@@ -390,83 +390,14 @@ QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE Q
 	
 	return j;
 }
-/**
- * Fuction to send the PUBLISH message with user message length before user message
- * \param dest - pointer in which to store the message
- * \param message - string with the message that you want to publish
- * \param topic - string with the message topic
- * \param messID - message id number
- * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
- * \return the massage length
- */
-QWORD MQTT_Publishcustom(char * dest, char * message, char * topic, int messID, BYTE QoS)
-{
-	int lenTopic=strlen(topic);
-	int lenMess=strlen(message);
-	char temp[lenTopic+lenMess+100];
-	
-	QWORD i=0;
-	
-	temp[i++]=MQTT_PUBLISH|(QoS<<1);
-	
-	temp[i++] = lenTopic>>8;
-	temp[i++] = lenTopic;
-	
-	QWORD k=0;
-	
-	for(k=0;k<lenTopic;k++)
-		temp[i++]=topic[k];
-		
-	if(QoS>0)
-	{
-		temp[i++] = messID>>8;
-		temp[i++] = messID;
-	}
-	
-	temp[i++] = lenMess>>8;
-	temp[i++] = lenMess;
-	for(k=0;k<lenMess;k++)
-		temp[i++]=message[k];
-
-	char digit[5];
-	
-	int X=i-1;
-	k=0;
-	do
-	{
-		digit[k] = X%128;
-		X = X/128;
-		if (X>0)
-			digit[k] = digit[k]|0x80;
-		k++;
-	}while(X>0);
-	
-	QWORD j=0;
-	
-	dest[0]=temp[0];
-	
-	for(j=1;j<k+i;j++)
-	{
-		if(j>=1&&j<=k)
-		{
-			dest[j]=digit[j-1];
-		}
-		else
-		{
-			dest[j]=temp[j-k];
-		}		
-	}
-	
-	return j;
-}
 
 /**
- * Fuction to send the SUBSCRIBE message
+ * Function to send the SUBSCRIBE message
  * \param dest - pointer in which to store the message
  * \param topic - string with the topic in which you want to subscribe
  * \param messID - message id number
  * \param willQoS - will message QoS mode - MQTT_QOS_0, MQTT_QOS_1, MQTT_QOS_2, MQTT_QOS_3
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 {
@@ -523,10 +454,10 @@ int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS)
 }
 
 /**
- * Fuction to send the PUBACK message
+ * Function to send the PUBACK message
  * \param dest - pointer in which to store the message
  * \param messID - message id number
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Puback(char * dest, int messID)
 {
@@ -538,10 +469,10 @@ int MQTT_Puback(char * dest, int messID)
 }
 
 /**
- * Fuction to send the PUBREC message
+ * Function to send the PUBREC message
  * \param dest - pointer in which to store the message
  * \param messID - message id number
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Pubrec(char * dest, int messID)
 {
@@ -553,10 +484,10 @@ int MQTT_Pubrec(char * dest, int messID)
 }
 
 /**
- * Fuction to send the PUBREL message
+ * Function to send the PUBREL message
  * \param dest - pointer in which to store the message
  * \param messID - message id number
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Pubrel(char * dest, int messID)
 {
@@ -568,10 +499,10 @@ int MQTT_Pubrel(char * dest, int messID)
 }
 
 /**
- * Fuction to send the PUBCOMP message
+ * Function to send the PUBCOMP message
  * \param dest - pointer in which to store the message
  * \param messID - message id number
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Pubcomp(char * dest, int messID)
 {
@@ -583,11 +514,11 @@ int MQTT_Pubcomp(char * dest, int messID)
 }
 
 /**
- * Fuction to send the UNSUBSCRIBE message
+ * Function to send the UNSUBSCRIBE message
  * \param dest - pointer in which to store the message
  * \param topic - string with the topic in which you want to unsubscribe
  * \param messID - message id number
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Unsubscribe(char * dest, char * topic, int messID)
 {
@@ -642,9 +573,9 @@ int MQTT_Unsubscribe(char * dest, char * topic, int messID)
 }
 
 /**
- * Fuction to send the PINGREQ message
+ * Function to send the PINGREQ message
  * \param dest - pointer in which to store the message
- * \return the massage length
+ * \return the message length
  */
 int MQTT_Pingreq(char * dest)
 {
