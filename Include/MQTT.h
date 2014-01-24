@@ -40,18 +40,20 @@
 
 struct MQTT_Response
 {
-  BYTE 	MQTT_COMMAND;
-  QWORD MQTT_LENGTH;
-  BYTE 	MQTT_RCODE;
-  char  MQTT_MESSAGE[MQTT_MAX_RESPONSE];
-  BOOL 	MQTT_READY;
+  BYTE 	COMMAND;
+  QWORD LENGTH;
+  BYTE 	RCODE;
+  char  MESSAGE[MQTT_MAX_RESPONSE];
+  BOOL 	READY;
+  BOOL 	BUSY;
+  BOOL  FLAG_128BIT;
 };
 
 /*****************************************************************************
         MQTT function declarations
 *****************************************************************************/
 
-void MQTT_Check_Response(char data);
+void MQTT_Check_Response(char * response);
 int MQTT_ConnectID(char * dest, char * id, int keepalive, BOOL cleanflag);
 int MQTT_ConnectLOGIN(char * dest, char * id, int keepalive, BOOL cleanflag,char * user, char * password);
 int MQTT_ConnectWILL(char * dest, char * id, int keepalive, BOOL cleanflag, char * willTopic, char * willMessage, BOOL willRetain, BYTE willQoS);
@@ -65,3 +67,6 @@ int MQTT_Pubrec(char * dest, int messID);
 int MQTT_Pubrel(char * dest, int messID);
 int MQTT_Subscribe(char * dest, char * topic, int messID, BYTE QoS);
 int MQTT_Unsubscribe(char * dest, char * topic, int messID);
+BYTE MQTT_Response_Sniffer(TCP_SOCKET socket);
+void MQTT_Last_Response_Message(char * dest);
+QWORD MQTT_Last_Response_Length();

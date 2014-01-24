@@ -4,6 +4,8 @@ lib_mqtt
 Flyport library for the MQTT communication, released under GPL v.3.<br>
 The library allows to use the MQTT communication.<br>
 More info on http://wiki.openpicus.com and download it http://wiki.openpicus.com/index.php/MQTT.<br>
+Inspired by http://knolleary.net/arduino-client-for-mqtt/<br>
+<br>
 1) import files inside Flyport IDE using the external libs button.<br>
 2) add following code example in FlyportTask.c:<br>
 
@@ -11,21 +13,18 @@ More info on http://wiki.openpicus.com and download it http://wiki.openpicus.com
 #include "taskFlyport.h"
 #include "MQTT.h"
 
-extern struct MQTT_Response MQTT_Last_Response;
-
 void FlyportTask()
 {
 	char cmd='X';
 	BOOL flagCMD=FALSE;
-	char bff[50];
-	int RxLenTCP=0;
+	char bff[5];
 	int RxLenUART=0;
 	TCP_SOCKET sock = INVALID_SOCKET;
 
 	int cnt=0;
-	
+
 	// Flyport connects to default network
-	//WFConnect(WF_DEFAULT);
+	WFConnect(WF_DEFAULT);
 	while(WFGetStat() != CONNECTED);
 	vTaskDelay(25);
 	UARTWrite(1,"Flyport Wi-fi G connected...hello world!\r\n");
@@ -35,12 +34,45 @@ void FlyportTask()
 	
 	while(1)
 	{
-		while((RxLenTCP=TCPRxLen(sock))>0)
+		switch (MQTT_Response_Sniffer(sock))
 		{
-			TCPRead(sock,bff,1);
-			//UARTWriteCh(1,bff[0]);	
-			MQTT_Check_Responce(bff[0]);
+			case MQTT_CONNACK:
+				UARTWrite(1,"\r\nCONNACK detected\r\n");
+			break;
+			case MQTT_PUBLISH:
+				{
+					UARTWrite(1,"\r\nPUBLISH detected\r\n");
+					QWORD lenmess=MQTT_Last_Response_Length();
+					char message[lenmess];
+					MQTT_Last_Response_Message(message);
+					QWORD i=0;
+					for(i=0;i<lenmess;i++)
+						UARTWriteCh(1,message[i]);
+				}
+			break;
+			case MQTT_PUBACK:				
+				UARTWrite(1,"\r\nPUBACK detected\r\n");
+			break;
+			case MQTT_PUBREC:				
+				UARTWrite(1,"\r\nPUBREC detected\r\n");
+			break;
+			case MQTT_PUBCOMP:				
+				UARTWrite(1,"\r\nPUBCOMP detected\r\n");
+			break;
+			case MQTT_SUBACK:				
+				UARTWrite(1,"\r\nSUBACK detected\r\n");
+			break;
+			case MQTT_UNSUBACK:				
+				UARTWrite(1,"\r\nUNSUBACK detected\r\n");
+			break;
+			case MQTT_PINGRESP:				
+				UARTWrite(1,"\r\nPINGRESP detected\r\n");
+			break;
+			case 1:				
+				UARTWrite(1,"\r\nTCP Socket is disconnected\r\n");
+			break;
 		}
+	
 		while((RxLenUART=UARTBufferSize(1))>0)
 		{
 			UARTRead(1,bff,1);
@@ -53,17 +85,7 @@ void FlyportTask()
 			if(bff[0]=='#')	
 				flagCMD=TRUE;
 		}
-		if(MQTT_Last_Response.MQTT_READY==1)
-		{
-			MQTT_Last_Response.MQTT_READY=0;
-			char db[250];
-			sprintf(db,"\r\nCMD: %02x\r\nLEN: %2.1f\r\n",MQTT_Last_Response.MQTT_COMMAND,(double)MQTT_Last_Response.MQTT_LENGTH);
-			UARTWrite(1,db);
-			int i=0;
-			UARTWrite(1,"Message: ");
-			for(i=0;i<MQTT_Last_Response.MQTT_LENGTH;i++)
-					UARTWriteCh(1,MQTT_Last_Response.MQTT_MESSAGE[i]);
-		}
+
 		if(cmd!='X')
 		{
 			if(cmd=='Q')
@@ -100,18 +122,12 @@ void FlyportTask()
 			else if(cmd=='I')
 				len = MQTT_Pingreq(buffer);
 			else if(cmd=='O')
-				len = MQTT_Subscribe(buffer, "myPICUSHOUSE", 50, MQTT_QOS_0);
-				
+				len = MQTT_Subscribe(buffer, "myPICUSHOUSE/WEST/#", 50, MQTT_QOS_0);
+			
 			if(len>0)
-			{
-				/*
-				int i=0;
-				for(i=0;i<len;i++)
-					UARTWriteCh(1,buffer[i]);
-				*/
 				TCPWrite(sock,buffer,len);
-				len=0;
-			}
+				
+			len=0;
 			cmd = 'X';
 		}
 	}

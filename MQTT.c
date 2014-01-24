@@ -22,6 +22,8 @@
  *  This is free software; you can redistribute it and/or modify it under
  *  the terms of the GNU General Public License (version 2) as published by
  *  the Free Software Foundation AND MODIFIED BY OpenPicus team.
+ *	
+ *  Inspired by http://knolleary.net/arduino-client-for-mqtt/
  *
  *  ***NOTE*** The exception to the GPL is included to allow you to distribute
  *  a combined work that includes OpenPicus code without being obliged to
@@ -261,52 +263,62 @@ int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * pass
 }
 
 /**
- * Function to check the server response, it must be run on every response byte with a little interval between two messages
- * \param data - response message byte
+ * Function to check the server response
+ * \param response - response message pointer
  */
-void MQTT_Check_Response(char data)
+void MQTT_Check_Response(char * response)
 {
-	response_temp[z]=data;
-	if(z==0)
+	if(MQTT_Last_Response.BUSY==0)
 	{
+		MQTT_Last_Response.COMMAND=response[0]&0xF0;
 		multiplier = 1;
-		value = 0;
-		p=1;
-		MQTT_Last_Response.MQTT_READY=0;
-		MQTT_Last_Response.MQTT_RCODE=0xFF;
-		MQTT_Last_Response.MQTT_LENGTH=0;
-		MQTT_Last_Response.MQTT_COMMAND=0;
-	}
-	else if(z<=p)
-	{
-		value += (data&127) * multiplier;
-		if((data&128) != 0)
+		value = 0;		
+		MQTT_Last_Response.READY=0;
+		MQTT_Last_Response.RCODE=0xFF;
+		MQTT_Last_Response.LENGTH=0;		
+		value += (response[1]&127) * multiplier;		
+		MQTT_Last_Response.FLAG_128BIT=0;		
+		if((response[1]&128) != 0)
 		{
 			multiplier *= 128;
-			p++;
-		}
+			MQTT_Last_Response.FLAG_128BIT=1;
+		}		
+		MQTT_Last_Response.LENGTH=value;
+		MQTT_Last_Response.BUSY=1;
 	}
-	if(z==value+1)
+	else if(MQTT_Last_Response.BUSY==1)
 	{
-		MQTT_Last_Response.MQTT_COMMAND=response_temp[0]&0xF0;
-		MQTT_Last_Response.MQTT_LENGTH=value;
-		int i=0;
-		for(i=0;i<value;i++)
-					MQTT_Last_Response.MQTT_MESSAGE[i]=response_temp[2+i];
-		switch (MQTT_Last_Response.MQTT_COMMAND)
+		if(MQTT_Last_Response.FLAG_128BIT==1)
 		{
-			case MQTT_CONNACK:
-				MQTT_Last_Response.MQTT_RCODE=response_temp[3];
-			break;
-
-			default:
-			
-			break;		
+			value += (response[0]&127) * multiplier;
+			MQTT_Last_Response.FLAG_128BIT=0;
+			if((response[0]&128) != 0)
+			{
+				multiplier *= 128;
+				MQTT_Last_Response.FLAG_128BIT=1;
+			}
+			MQTT_Last_Response.LENGTH=value;
 		}
-		z=-1;
-		MQTT_Last_Response.MQTT_READY=1;
+		else
+		{
+			int i=0;
+			for(i=0;i<value;i++)
+					MQTT_Last_Response.MESSAGE[i]=response[i];
+			
+			switch (MQTT_Last_Response.COMMAND)
+			{
+				case MQTT_CONNACK:
+					MQTT_Last_Response.RCODE=response[1];
+				break;
+
+				default:				
+				break;		
+			}
+			MQTT_Last_Response.BUSY=0;
+			MQTT_Last_Response.FLAG_128BIT=0;
+			MQTT_Last_Response.READY=1;
+		}
 	}
-	z++;
 }
 
 /**
@@ -353,9 +365,7 @@ QWORD MQTT_Publish(char * dest, char * message, char * topic, int messID, BYTE Q
 		temp[i++] = messID>>8;
 		temp[i++] = messID;
 	}
-	
-	/*temp[i++] = lenMess>>8;
-	temp[i++] = lenMess;*/
+
 	for(k=0;k<lenMess;k++)
 		temp[i++]=message[k];
 
@@ -582,5 +592,61 @@ int MQTT_Pingreq(char * dest)
 	dest[0]=MQTT_PINGREQ;
 	dest[1]=0x00;
 	return 2;
+}
+
+/**
+ * Function to intercept the MQTT response
+ * \param socket - the handle of the socket to use
+ * \return the hex (see defines) of MQTT message type or 1 for connection disconnected.
+ */
+BYTE MQTT_Response_Sniffer(TCP_SOCKET socket)
+{
+	if(TCPisConn(socket)==TRUE)
+	{
+		if(TCPRxLen(socket)>1&&MQTT_Last_Response.BUSY==0)
+		{
+			TCPRead(socket,response_temp,2);	
+			MQTT_Check_Response(response_temp);
+			return 0;
+		}
+		else if(MQTT_Last_Response.BUSY==1&&MQTT_Last_Response.FLAG_128BIT==1)
+		{
+			while(TCPRxLen(socket)<1);
+			TCPRead(socket,response_temp,1);
+			MQTT_Check_Response(response_temp);
+			return 0;
+		}
+		else if(MQTT_Last_Response.BUSY==1&&MQTT_Last_Response.FLAG_128BIT==0)
+		{
+			while(TCPRxLen(socket)<MQTT_Last_Response.LENGTH);
+			TCPRead(socket,response_temp,MQTT_Last_Response.LENGTH);
+			MQTT_Check_Response(response_temp);
+			return MQTT_Last_Response.COMMAND;
+		}
+		else
+			return 0;
+	}
+	else
+		return 1;
+}
+
+/**
+ * Function to get the last MQTT response message
+ * \param dest - pointer in which to store the message
+ */
+void MQTT_Last_Response_Message(char * dest)
+{
+	QWORD i=0;
+	for(i=0;i<MQTT_Last_Response.LENGTH;i++)
+		dest[i]=MQTT_Last_Response.MESSAGE[i];
+}
+
+/**
+ * Function to get the last MQTT response length
+ * \return last MQTT response length
+ */
+QWORD MQTT_Last_Response_Length()
+{
+	return MQTT_Last_Response.LENGTH;
 }
 
