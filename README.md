@@ -68,9 +68,6 @@ void FlyportTask()
 			case MQTT_PINGRESP:				
 				UARTWrite(1,"\r\nPINGRESP detected\r\n");
 			break;
-			case 1:				
-				UARTWrite(1,"\r\nTCP Socket is disconnected\r\n");
-			break;
 		}
 	
 		while((RxLenUART=UARTBufferSize(1))>0)
