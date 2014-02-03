@@ -14,7 +14,7 @@
  *
  *  Author               Rev.    Date              Comment
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *  Stefano Saccucci     1.0     01/23/2014        First release  (core team)
+ *  Stefano Saccucci     1.1     02/03/2014        First release  (core team)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  *  Software License Agreement
