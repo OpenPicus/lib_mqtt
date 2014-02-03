@@ -58,7 +58,7 @@
 The MQTT library contains all the command to use the MQTT communication protocol.
 */
 
-#include "TCPLib.h"
+#include "taskFlyport.h"
 #include "MQTT.h"
 
 
@@ -597,37 +597,46 @@ int MQTT_Pingreq(char * dest)
 /**
  * Function to intercept the MQTT response
  * \param socket - the handle of the socket to use
- * \return the hex (see defines) of MQTT message type or 1 for connection disconnected.
+ * \return the hex (see defines) of MQTT message type or 0.
  */
 BYTE MQTT_Response_Sniffer(TCP_SOCKET socket)
 {
-	if(TCPisConn(socket)==TRUE)
+	int len=0;
+	while((len=statusTCP(socket))>0)
 	{
-		if(TCPRxLen(socket)>1&&MQTT_Last_Response.BUSY==0)
+		if(len>1&&MQTT_Last_Response.BUSY==0)
 		{
-			TCPRead(socket,response_temp,2);	
+			#if defined (FLYPORTGPRS)
+				TCPRead(&socket,response_temp,2);	
+			#else
+				TCPRead(socket,response_temp,2);
+			#endif
 			MQTT_Check_Response(response_temp);
-			return 0;
 		}
 		else if(MQTT_Last_Response.BUSY==1&&MQTT_Last_Response.FLAG_128BIT==1)
 		{
-			while(TCPRxLen(socket)<1);
-			TCPRead(socket,response_temp,1);
+			#if defined (FLYPORTGPRS)
+				TCPRead(&socket,response_temp,1);
+			#else
+				TCPRead(socket,response_temp,1);
+			#endif
 			MQTT_Check_Response(response_temp);
-			return 0;
 		}
 		else if(MQTT_Last_Response.BUSY==1&&MQTT_Last_Response.FLAG_128BIT==0)
 		{
-			while(TCPRxLen(socket)<MQTT_Last_Response.LENGTH);
-			TCPRead(socket,response_temp,MQTT_Last_Response.LENGTH);
-			MQTT_Check_Response(response_temp);
-			return MQTT_Last_Response.COMMAND;
+			if(len>(MQTT_Last_Response.LENGTH-1))
+			{
+				#if defined (FLYPORTGPRS)
+					TCPRead(&socket,response_temp,MQTT_Last_Response.LENGTH);
+				#else
+					TCPRead(socket,response_temp,MQTT_Last_Response.LENGTH);
+				#endif
+				MQTT_Check_Response(response_temp);
+				return MQTT_Last_Response.COMMAND;
+			}
 		}
-		else
-			return 0;
 	}
-	else
-		return 1;
+	return 0;
 }
 
 /**
@@ -639,6 +648,8 @@ void MQTT_Last_Response_Message(char * dest)
 	QWORD i=0;
 	for(i=0;i<MQTT_Last_Response.LENGTH;i++)
 		dest[i]=MQTT_Last_Response.MESSAGE[i];
+		
+	MQTT_Last_Response.READY=0;	//new
 }
 
 /**
@@ -649,4 +660,40 @@ QWORD MQTT_Last_Response_Length()
 {
 	return MQTT_Last_Response.LENGTH;
 }
+
+/**
+ * Function to get the last MQTT Ready flag
+ * \return last MQTT ready flag
+ */
+BOOL MQTT_Last_Response_Ready()
+{
+	return MQTT_Last_Response.READY;
+}
+
+int statusTCP(TCP_SOCKET socket)
+{
+	#if ( defined (FLYPORT_WF) || defined (FLYPORT_ETH) )
+		if(TCPisConn(socket)==TRUE)
+			return TCPRxLen(socket);
+		else
+			return 0;
+	#else
+		BYTE blackout=0;
+		TCPStatus(&socket);
+		while(LastExecStat() == OP_EXECUTION);
+		vTaskDelay(20);
+		blackout=0;
+		for(blackout=0; blackout<10;blackout++)
+		{
+			if(LastExecStat() == OP_SUCCESS)
+			{				
+				if(socket.status == SOCK_CONNECT)
+				return socket.rxLen;
+			}
+			vTaskDelay(20);
+		}
+		return 0;
+	#endif			
+}
+
 

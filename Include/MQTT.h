@@ -7,6 +7,7 @@
 
  Library to manage the MQTT communication protocol.
 */
+#include<HWlib.h>
 
 #define MQTT_Reserved1 		0		//Reserved
 #define MQTT_CONNECT 		0x10	//Client request to connect to Server		CLIENT->OK
@@ -70,3 +71,7 @@ int MQTT_Unsubscribe(char * dest, char * topic, int messID);
 BYTE MQTT_Response_Sniffer(TCP_SOCKET socket);
 void MQTT_Last_Response_Message(char * dest);
 QWORD MQTT_Last_Response_Length();
+BOOL MQTT_Last_Response_Ready();
+int statusTCP(TCP_SOCKET socket);
+
+
