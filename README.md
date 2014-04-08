@@ -47,7 +47,9 @@ void FlyportTask()
 					MQTT_Last_Response_Message(message);
 					QWORD i=0;
 					for(i=0;i<lenmess;i++)
+					{
 						UARTWriteCh(1,message[i]);
+					}
 				}
 			break;
 			case MQTT_PUBACK:				
