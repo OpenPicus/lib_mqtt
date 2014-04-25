@@ -6,18 +6,20 @@ The library allows to use the MQTT communication.<br>
 More info on http://wiki.openpicus.com and download it http://wiki.openpicus.com/index.php/MQTT.<br>
 Inspired by http://knolleary.net/arduino-client-for-mqtt/<br>
 <br>
-How the example works:
+'''How the example works'''
 
-All commands are available throw a serial monitor sending # + letter
-- #Q
-- #W
-- #E
-- #R
-- #T
-- #Y
-- #U
-- #I
-- #O
+All commands are available by  the serial monitor sending  # + letter
+- #Q : connect to mosquitto server
+- #W : register to mosquitto with ID only
+- #E : register to mosquitto with ID and WILL feature
+- #R : unregister from mosquitto
+- #T : publish on myPICUSHOUSE with QoS=1
+- #Y : publish on myPICUSHOUSE with QoS=2
+- #U : send a PUBREL (it must be sent when PUBREC is received (PUBLISH QoS=2))
+- #I : send a PINGREQ
+- #O : subscribe to myPICUSHOUSE/WEST/# with QoS=0
+
+Every time the sniffer detects a MQTT message, it writes this on the serial monitor.
 
 <br>
 1) import files inside Flyport IDE using the external libs button.<br>
