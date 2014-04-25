@@ -6,6 +6,20 @@ The library allows to use the MQTT communication.<br>
 More info on http://wiki.openpicus.com and download it http://wiki.openpicus.com/index.php/MQTT.<br>
 Inspired by http://knolleary.net/arduino-client-for-mqtt/<br>
 <br>
+How the example works:
+
+All commands are available throw a serial monitor sending # + letter
+- #Q
+- #W
+- #E
+- #R
+- #T
+- #Y
+- #U
+- #I
+- #O
+
+<br>
 1) import files inside Flyport IDE using the external libs button.<br>
 2) add following code example in FlyportTask.c:<br>
 
