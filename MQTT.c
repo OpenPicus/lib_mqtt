@@ -176,9 +176,9 @@ int MQTT_Connect(char * dest, char * id, int keepalive, char * user, char * pass
 	
 	if(user!=NULL)
 	{
-		temp[i]=dest[i]|0x80;
+		temp[i]=temp[i]|0x80;
 		if(password!=NULL)
-			temp[i]=dest[i]|0x40;
+			temp[i]=temp[i]|0x40;
 	}
 
 	if(willTopic!=NULL)
