@@ -271,20 +271,29 @@ void MQTT_Check_Response(char * response)
 	if(MQTT_Last_Response.BUSY==0)
 	{
 		MQTT_Last_Response.COMMAND=response[0]&0xF0;
-		multiplier = 1;
-		value = 0;		
-		MQTT_Last_Response.READY=0;
-		MQTT_Last_Response.RCODE=0xFF;
-		MQTT_Last_Response.LENGTH=0;		
-		value += (response[1]&127) * multiplier;		
-		MQTT_Last_Response.FLAG_128BIT=0;		
-		if((response[1]&128) != 0)
+		if(MQTT_Last_Response.COMMAND==MQTT_PINGRESP)
 		{
-			multiplier *= 128;
-			MQTT_Last_Response.FLAG_128BIT=1;
-		}		
-		MQTT_Last_Response.LENGTH=value;
-		MQTT_Last_Response.BUSY=1;
+			MQTT_Last_Response.BUSY=0;
+			MQTT_Last_Response.FLAG_128BIT=0;
+			MQTT_Last_Response.READY=1;
+		}
+		else
+		{
+			multiplier = 1;
+			value = 0;		
+			MQTT_Last_Response.READY=0;
+			MQTT_Last_Response.RCODE=0xFF;
+			MQTT_Last_Response.LENGTH=0;		
+			value += (response[1]&127) * multiplier;		
+			MQTT_Last_Response.FLAG_128BIT=0;		
+			if((response[1]&128) != 0)
+			{
+				multiplier *= 128;
+				MQTT_Last_Response.FLAG_128BIT=1;
+			}		
+			MQTT_Last_Response.LENGTH=value;
+			MQTT_Last_Response.BUSY=1;
+		}
 	}
 	else if(MQTT_Last_Response.BUSY==1)
 	{
@@ -612,6 +621,8 @@ BYTE MQTT_Response_Sniffer(TCP_SOCKET socket)
 				TCPRead(socket,response_temp,2);
 			#endif
 			MQTT_Check_Response(response_temp);
+			if(MQTT_Last_Response.COMMAND==MQTT_PINGRESP)
+				return MQTT_Last_Response.COMMAND;
 		}
 		else if(MQTT_Last_Response.BUSY==1&&MQTT_Last_Response.FLAG_128BIT==1)
 		{
