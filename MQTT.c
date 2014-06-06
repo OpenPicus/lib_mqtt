@@ -275,7 +275,9 @@ void MQTT_Check_Response(char * response)
 		{
 			MQTT_Last_Response.BUSY=0;
 			MQTT_Last_Response.FLAG_128BIT=0;
+			MQTT_Last_Response.LENGTH=0;
 			MQTT_Last_Response.READY=1;
+			MQTT_Last_Response.RCODE=0xFF;
 		}
 		else
 		{
