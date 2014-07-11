@@ -9,6 +9,9 @@
 */
 #include<HWlib.h>
 
+#ifndef _LIB_MQTT_H_
+#define _LIB_MQTT_H_
+
 #define MQTT_Reserved1 		0		//Reserved
 #define MQTT_CONNECT 		0x10	//Client request to connect to Server		CLIENT->OK
 #define MQTT_CONNACK 		0x20	//Connect Acknowledgment					RESPONSE->OK
@@ -74,4 +77,4 @@ QWORD MQTT_Last_Response_Length();
 BOOL MQTT_Last_Response_Ready();
 int statusTCP(TCP_SOCKET socket);
 
-
+#endif
